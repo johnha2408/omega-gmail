@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Omega 2000 — Email Generator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg2: #f5f5f4;
+      --bg3: #f0efeb;
+      --text: #1a1a18;
+      --text2: #6b6b67;
+      --border: rgba(0,0,0,0.12);
+      --border2: rgba(0,0,0,0.22);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --font: 'DM Sans', system-ui, sans-serif;
+      --mono: 'DM Mono', 'Courier New', monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1c1c1a;
+        --bg2: #242422;
+        --bg3: #2a2a28;
+        --text: #e8e8e4;
+        --text2: #8a8a84;
+        --border: rgba(255,255,255,0.1);
+        --border2: rgba(255,255,255,0.2);
+      }
+    }
+
+    html, body {
+      min-height: 100vh;
+      background: var(--bg3);
+      font-family: var(--font);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono&display=swap');
+
+    .page {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+
+    /* Header */
+    .page-header {
+      margin-bottom: 2rem;
+    }
+    .page-header h1 {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .page-header p {
+      font-size: 13px;
+      color: var(--text2);
+      margin-top: 4px;
+    }
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    .logo-badge {
+      background: var(--text);
+      color: var(--bg);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 100px;
+      letter-spacing: 0.04em;
+    }
+
+    /* Card */
+    .card {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Form */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 480px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    input[type="text"], select {
+      height: 38px;
+      padding: 0 12px;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      background: var(--bg2);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    input[type="text"]:focus, select:focus {
+      border-color: var(--text);
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.06);
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+      cursor: pointer;
+    }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      height: 38px;
+      padding: 0 18px;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.12s, opacity 0.12s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--bg2); }
+    .btn:active { opacity: 0.75; }
+    .btn-primary {
+      background: var(--text);
+      color: var(--bg);
+      border-color: transparent;
+    }
+    .btn-primary:hover { opacity: 0.85; background: var(--text); }
+    .btn-sm {
+      height: 28px;
+      padding: 0 12px;
+      font-size: 11px;
+    }
+
+    /* Output */
+    .output-section { margin-top: 1.5rem; }
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .subject-box {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    .subject-text { flex: 1; }
+    .body-box {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.75;
+      color: var(--text);
+      white-space: pre-wrap;
+      min-height: 200px;
+    }
+    .action-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .divider {
+      border: none;
+      border-top: 0.5px solid var(--border);
+      margin: 1.25rem 0;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text2);
+      font-size: 13px;
+    }
+    .error-state {
+      color: #c0392b;
+      text-align: center;
+      padding: 1rem;
+      font-size: 13px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--text);
+      color: var(--bg);
+      font-size: 13px;
+      padding: 9px 18px;
+      border-radius: var(--radius);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 999;
+      font-family: var(--font);
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* Footer */
+    .footer {
+      margin-top: 2.5rem;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text2);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <div class="page-header">
+      <div class="logo-row">
+        <span class="logo-badge">OMEGA 2000</span>
+      </div>
+      <h1>Project Email Generator</h1>
+      <p>Fill in the fields below to generate a status notification email.</p>
+    </div>
+
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Supervisor Name</label>
+          <input type="text" id="supervisorName" placeholder="e.g. Ryan" />
+        </div>
+        <div class="form-group">
+          <label>Project Name</label>
+          <input type="text" id="projectName" placeholder="e.g. 123 Main St NW" />
+        </div>
+        <div class="form-group full">
+          <label>Project Status</label>
+          <select id="statusSelect">
+            <option value="">— Select a status —</option>
+            <option value="Footing Poured">Footing Poured</option>
+            <option value="Footing in Progress">Footing in Progress</option>
+            <option value="Standing Wall">Standing Wall</option>
+            <option value="Wall Poured">Wall Poured</option>
+            <option value="Wall Stripped">Wall Stripped</option>
+            <option value="Project Completed">Project Completed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generate()">Generate Email</button>
+        <button class="btn" onclick="clearAll()">Clear</button>
+      </div>
+
+      <div id="output" class="output-section">
+        <div class="empty-state">Fill in all fields and click Generate Email</div>
+      </div>
+    </div>
+
+    <div class="footer">Omega 2000 · Internal Tool · Built by Storimatic</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const SIG = `Warm regards,\nOmega 2000 Production Team\n\nMain Office\n403-217-4888\nomegac@telus.net\n\nCalgary South Field Operations\nBryan Regular - 403-923-5848\nBryan@omega2000.ca\n\nCalgary North Field Operations\nFrank Healey - 403-510-3389\nFrank@omega2000.ca\n\nService Department\nLois Miller - 403-371-3959\nomegasaf@telus.net`;
+
+    const TEMPLATES = {
+      "Footing Poured": {
+        sub: p => `Footing Poured - ${p}`,
+        body: (s, p) => `Dear ${s},\n\nI hope this message finds you well. We are excited to inform you that footing has been poured. I am writing to inform you of a current situation at ${p}.\n\nProject Status: Footing Poured\nLocation: ${p}\n\nYour Point of Contact:\n\nTo ensure smooth communication and project management, Frank Healey will be your primary point of contact. They can be reached at 403-510-3389 for any queries or updates you may require.\n\n${SIG}`
+      },
+      "Footing in Progress": {
+        sub: p => `Footing in Progress - ${p}`,
+        body: (s, p) => `Dear ${s},\n\nI hope this message finds you well. We are excited to inform you that footing is in progress. I am writing to inform you of a current situation at ${p}.\n\nProject Status: Footing Ready\nLocation: ${p}\n\nYour Point of Contact:\n\nTo ensure smooth communication and project management, Frank Healey will be your primary point of contact. They can be reached at 403-510-3389 for any queries or updates you may require.\n\n${SIG}`
+      },
+      "Standing Wall": {
+        sub: p => `Standing Wall - ${p}`,
+        body: (s, p) => `Dear ${s},\n\nI hope this email finds you well. I am writing to inform you of a current situation at ${p}.\n\nProject Status: Standing Wall\n\nYour Point of Contact:\n\nTo ensure smooth communication and project management, Frank Healey will be your primary point of contact. They can be reached at 403-510-3389 for any queries or updates you may require.\n\n${SIG}`
+      },
+      "Wall Poured": {
+        sub: p => `Wall Poured - ${p}`,
+        body: (s, p) => `Dear ${s},\n\nI hope this message finds you well. We are excited to inform you that wall has been poured. I am writing to inform you of a current situation at ${p}.\n\nProject Status: Wall Poured\nLocation: ${p}\n\nYour Point of Contact:\n\nTo ensure smooth communication and project management, Frank Healey will be your primary point of contact. They can be reached at 403-510-3389 for any queries or updates you may require.\n\n${SIG}`
+      },
+      "Wall Stripped": {
+        sub: p => `Wall Stripped - ${p}`,
+        body: (s, p) => `Dear ${s},\n\nI hope this message finds you well. We are excited to inform you that wall has been stripped. I am writing to inform you of a current situation at ${p}.\n\nProject Status: Wall Stripped\nLocation: ${p}\n\nYour Point of Contact:\n\nTo ensure smooth communication and project management, Bryan Regular will be your primary point of contact. They can be reached at 403-923-5848 for any queries or updates you may require.\n\n${SIG}`
+      },
+      "Project Completed": {
+        sub: p => `Project Completed - ${p}`,
+        body: (s, p) => `Dear ${s},\n\nI hope this message finds you well. We are excited to inform you that your project, ${p} has been completed and ready for the next trade.\n\nProject Status: Completed\nLocation: ${p}\n\nYour Point of Contact:\n\nTo ensure smooth communication and project management, Frank Healey will be your primary point of contact. They can be reached at 403-510-3389 for any queries or updates you may require.\n\n${SIG}`
+      }
+    };
+
+    function generate() {
+      const s = document.getElementById('supervisorName').value.trim();
+      const p = document.getElementById('projectName').value.trim();
+      const status = document.getElementById('statusSelect').value;
+      const out = document.getElementById('output');
+
+      if (!s || !p || !status) {
+        out.innerHTML = '<div class="error-state">Please fill in all fields: Supervisor Name, Project Name, and Status.</div>';
+        return;
+      }
+
+      const tmpl = TEMPLATES[status];
+      const subject = tmpl.sub(p);
+      const body = tmpl.body(s, p);
+
+      // Store raw plain text in hidden inputs — avoids DOM formatting issues on paste
+      out.innerHTML = `
+        <input type="hidden" id="rawSubject" value="${escAttr(subject)}" />
+        <input type="hidden" id="rawBody" value="${escAttr(body)}" />
+        <hr class="divider">
+        <div class="section-label">Subject Line</div>
+        <div class="subject-box">
+          <span class="subject-text">${esc(subject)}</span>
+          <button class="btn btn-sm" onclick="cp('rawSubject', 'Subject copied!')">Copy subject</button>
+        </div>
+        <div class="section-label">Email Body</div>
+        <div class="body-box">${esc(body)}</div>
+        <div class="action-row">
+          <button class="btn btn-sm" onclick="cp('rawBody', 'Body copied!')">Copy body</button>
+          <button class="btn btn-sm" onclick="cpAll()">Copy subject + body</button>
+        </div>
+      `;
+    }
+
+    function esc(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function escAttr(s) {
+      return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    }
+
+    // Robust copy: reads from hidden input value (pure plain text, no HTML formatting)
+    // Falls back to textarea trick if clipboard API unavailable
+    function cp(id, msg) {
+      const text = document.getElementById(id).value;
+      copyPlainText(text, msg);
+    }
+
+    function cpAll() {
+      const subj = document.getElementById('rawSubject').value;
+      const body = document.getElementById('rawBody').value;
+      copyPlainText('Subject: ' + subj + '\n\n' + body, 'Subject + body copied!');
+    }
+
+    function copyPlainText(text, msg) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text)
+          .then(() => showToast(msg))
+          .catch(() => fallbackCopy(text, msg));
+      } else {
+        fallbackCopy(text, msg);
+      }
+    }
+
+    function fallbackCopy(text, msg) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast(msg);
+      } catch (e) {
+        showToast('Copy failed — please copy manually.');
+      }
+      document.body.removeChild(ta);
+    }
+
+    function clearAll() {
+      document.getElementById('supervisorName').value = '';
+      document.getElementById('projectName').value = '';
+      document.getElementById('statusSelect').value = '';
+      document.getElementById('output').innerHTML = '<div class="empty-state">Fill in all fields and click Generate Email</div>';
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+  </script>
+</body>
+</html>
