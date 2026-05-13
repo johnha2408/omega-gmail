@@ -137,6 +137,15 @@
       cursor: pointer;
     }
 
+    /* Inline group for "Other..." input + Save button */
+    .other-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .other-row input[type="text"] { flex: 1; }
+    .hidden { display: none !important; }
+
     /* Buttons */
     .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn {
@@ -165,6 +174,12 @@
       height: 28px;
       padding: 0 12px;
       font-size: 11px;
+    }
+    .btn-danger-sm {
+      height: 38px;
+      padding: 0 12px;
+      font-size: 12px;
+      color: var(--text2);
     }
 
     /* Output */
@@ -270,8 +285,17 @@
       <div class="form-grid">
         <div class="form-group">
           <label>Supervisor Name</label>
-          <input type="text" id="supervisorName" placeholder="e.g. Ryan" />
+          <select id="supervisorSelect" onchange="onSupervisorChange()">
+            <!-- Options injected by JS -->
+          </select>
+
+          <!-- "Other..." input row: hidden by default -->
+          <div id="otherRow" class="other-row hidden">
+            <input type="text" id="supervisorOther" placeholder="Type new name…" />
+            <button class="btn btn-sm" onclick="saveNewSupervisor()">Save</button>
+          </div>
         </div>
+
         <div class="form-group">
           <label>Project Name</label>
           <input type="text" id="projectName" placeholder="e.g. 123 Main St NW" />
@@ -293,6 +317,7 @@
       <div class="btn-row">
         <button class="btn btn-primary" onclick="generate()">Generate Email</button>
         <button class="btn" onclick="clearAll()">Clear</button>
+        <button class="btn btn-danger-sm" onclick="manageNames()" title="Manage saved supervisor names">Manage names</button>
       </div>
 
       <div id="output" class="output-section">
@@ -306,6 +331,120 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    // ----- Supervisor list management -----
+    const DEFAULT_SUPERVISORS = ['Ryan', 'Tyson', 'Dima', 'Conrad', 'Paul', 'Denim'];
+    const STORAGE_KEY = 'omega2000_supervisors_v1';
+
+    function loadSupervisors() {
+      let custom = [];
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) custom = JSON.parse(raw) || [];
+      } catch (e) { custom = []; }
+      // Merge defaults + custom, dedupe (case-insensitive), keep order
+      const seen = new Set();
+      const merged = [];
+      [...DEFAULT_SUPERVISORS, ...custom].forEach(n => {
+        const key = n.trim().toLowerCase();
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          merged.push(n.trim());
+        }
+      });
+      return merged;
+    }
+
+    function saveCustomSupervisors(list) {
+      // Only save names that aren't in defaults
+      const defaultsLower = DEFAULT_SUPERVISORS.map(n => n.toLowerCase());
+      const custom = list.filter(n => !defaultsLower.includes(n.toLowerCase()));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(custom));
+    }
+
+    function renderSupervisorDropdown(selectedValue = '') {
+      const sel = document.getElementById('supervisorSelect');
+      const names = loadSupervisors();
+      sel.innerHTML = '';
+
+      const ph = document.createElement('option');
+      ph.value = '';
+      ph.textContent = '— Select supervisor —';
+      sel.appendChild(ph);
+
+      names.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        if (name === selectedValue) opt.selected = true;
+        sel.appendChild(opt);
+      });
+
+      const otherOpt = document.createElement('option');
+      otherOpt.value = '__OTHER__';
+      otherOpt.textContent = 'Other… (add new name)';
+      sel.appendChild(otherOpt);
+    }
+
+    function onSupervisorChange() {
+      const sel = document.getElementById('supervisorSelect');
+      const otherRow = document.getElementById('otherRow');
+      const otherInput = document.getElementById('supervisorOther');
+      if (sel.value === '__OTHER__') {
+        otherRow.classList.remove('hidden');
+        otherInput.value = '';
+        otherInput.focus();
+      } else {
+        otherRow.classList.add('hidden');
+      }
+    }
+
+    function saveNewSupervisor() {
+      const input = document.getElementById('supervisorOther');
+      const name = input.value.trim();
+      if (!name) {
+        showToast('Please type a name first.');
+        input.focus();
+        return;
+      }
+      const all = loadSupervisors();
+      const exists = all.some(n => n.toLowerCase() === name.toLowerCase());
+      if (!exists) {
+        all.push(name);
+        saveCustomSupervisors(all);
+        showToast(`Saved "${name}"`);
+      } else {
+        showToast(`"${name}" already in list`);
+      }
+      renderSupervisorDropdown(name);
+      document.getElementById('otherRow').classList.add('hidden');
+    }
+
+    function manageNames() {
+      const defaultsLower = DEFAULT_SUPERVISORS.map(n => n.toLowerCase());
+      const all = loadSupervisors();
+      const custom = all.filter(n => !defaultsLower.includes(n.toLowerCase()));
+
+      if (custom.length === 0) {
+        alert('No custom names saved yet.\n\nBuilt-in: ' + DEFAULT_SUPERVISORS.join(', '));
+        return;
+      }
+
+      const msg = 'Custom saved names:\n\n' + custom.map((n, i) => `${i + 1}. ${n}`).join('\n') +
+        '\n\nEnter the number of a name to DELETE, or click Cancel to keep all.';
+      const ans = prompt(msg, '');
+      if (ans === null || ans.trim() === '') return;
+      const idx = parseInt(ans, 10) - 1;
+      if (isNaN(idx) || idx < 0 || idx >= custom.length) {
+        showToast('Invalid number.');
+        return;
+      }
+      const removed = custom.splice(idx, 1)[0];
+      saveCustomSupervisors([...DEFAULT_SUPERVISORS, ...custom]);
+      renderSupervisorDropdown();
+      showToast(`Removed "${removed}"`);
+    }
+
+    // ----- Email templates (unchanged) -----
     const SIG = `Warm regards,\nOmega 2000 Production Team\n\nMain Office\n403-217-4888\nomegac@telus.net\n\nCalgary South Field Operations\nBryan Regular - 403-923-5848\nBryan@omega2000.ca\n\nCalgary North Field Operations\nFrank Healey - 403-510-3389\nFrank@omega2000.ca\n\nService Department\nLois Miller - 403-371-3959\nomegasaf@telus.net`;
 
     const TEMPLATES = {
@@ -335,8 +474,17 @@
       }
     };
 
+    function getSupervisorValue() {
+      const sel = document.getElementById('supervisorSelect');
+      if (sel.value === '__OTHER__') {
+        // Use whatever's typed in the "other" box (even if not saved yet)
+        return document.getElementById('supervisorOther').value.trim();
+      }
+      return sel.value.trim();
+    }
+
     function generate() {
-      const s = document.getElementById('supervisorName').value.trim();
+      const s = getSupervisorValue();
       const p = document.getElementById('projectName').value.trim();
       const status = document.getElementById('statusSelect').value;
       const out = document.getElementById('output');
@@ -350,7 +498,6 @@
       const subject = tmpl.sub(p);
       const body = tmpl.body(s, p);
 
-      // Store raw plain text in hidden inputs — avoids DOM formatting issues on paste
       out.innerHTML = `
         <input type="hidden" id="rawSubject" value="${escAttr(subject)}" />
         <input type="hidden" id="rawBody" value="${escAttr(body)}" />
@@ -377,8 +524,6 @@
       return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
     }
 
-    // Robust copy: reads from hidden input value (pure plain text, no HTML formatting)
-    // Falls back to textarea trick if clipboard API unavailable
     function cp(id, msg) {
       const text = document.getElementById(id).value;
       copyPlainText(text, msg);
@@ -417,7 +562,9 @@
     }
 
     function clearAll() {
-      document.getElementById('supervisorName').value = '';
+      renderSupervisorDropdown();
+      document.getElementById('otherRow').classList.add('hidden');
+      document.getElementById('supervisorOther').value = '';
       document.getElementById('projectName').value = '';
       document.getElementById('statusSelect').value = '';
       document.getElementById('output').innerHTML = '<div class="empty-state">Fill in all fields and click Generate Email</div>';
@@ -429,6 +576,9 @@
       t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 2000);
     }
+
+    // Init on load
+    renderSupervisorDropdown();
   </script>
 </body>
 </html>
